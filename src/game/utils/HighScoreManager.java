@@ -39,7 +39,9 @@ public class HighScoreManager {
      * @throws IllegalArgumentException if the file found at the path is not of type .csv
      */
     public HighScoreManager(String path) {
-
+        this.path = path;
+        highscores = new ArrayList<>();
+        loadHighScores();
     }
 
     /**
@@ -48,7 +50,20 @@ public class HighScoreManager {
      * stored as a HighScore record within the list.
      */
     private void loadHighScores() {
-
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 3) {
+                    int score = Integer.parseInt(parts[0]);
+                    String name = parts[1];
+                    LocalDate date = LocalDate.parse(parts[2]);
+                    highscores.add(new HighScore(score, name, date));
+                }
+            }
+        } catch (IOException | DateTimeParseException | NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Error loading high scores", e);
+        }
     }
 
     /**
@@ -60,9 +75,17 @@ public class HighScoreManager {
      * @throws IllegalArgumentException if {@code score} is negative or if {@code name} is {@code null} or blank
      */
     public void saveHighScore(int score, String name) {
-
+        if (score < 0 || name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Invalid score or name");
+        }
+        HighScore newHighScore = new HighScore(score, name, LocalDate.now());
+        highscores.add(newHighScore);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path, true))) {
+            writer.write(String.format("%d,%s,%s%n", score, name, LocalDate.now()));
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error saving high score", e);
+        }
     }
-
     /**
      * Returns a list of all saved highscores.
      * @return a new list of all saved highscores
