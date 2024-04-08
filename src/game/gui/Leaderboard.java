@@ -10,6 +10,15 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
+import java.time.LocateDate;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Used to manage and display the leaderboard.
@@ -133,6 +142,32 @@ public class Leaderboard {
                 return false;
             }
         };
+    }
+
+    public void saveHighScore(HighScore highScore) {
+        try (FileWriter writer = new FileWriter("main/src/resources/data/highscores.csv", true)) {
+            writer.append(highScore.score() + "," + highScore.name() + "," + highScore.date() + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    } 
+
+    public List<HighScore> loadHighScores() {
+        List<HighScore> highScores = new ArrayList<>();
+        try {
+            List<String> lines = Files.readAllLines(Paths.get("main/src/resources/data/highscores.csv"));
+            for (String line : lines) {
+                String[] parts = line.split(",");
+                int score = Integer.parseInt(parts[0]);
+                String name = parts[1];
+                LocalDate date = LocalDate.parse(parts[2]);
+                HighScore highScore = new HighScore(score, name, date);
+                highScores.add(highScore);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return highScores;
     }
 
 }
